@@ -1,37 +1,27 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
+ * The library in ./library registers its own descriptors for View and for
+ * Paragraph (<Text>) on iOS. Once this screen is mounted, it shows how many
+ * shadow nodes each of them adopted.
  *
  * @format
  */
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
+import { NativeModules, StyleSheet, Text, View } from 'react-native';
+
+const { LibraryDescriptorsProbe } = NativeModules;
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [report, setReport] = useState<string | null>(null);
 
-  return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
-  );
-}
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
+  useEffect(() => {
+    setReport(LibraryDescriptorsProbe.report());
+  }, []);
 
   return (
     <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
+      <Text>A Text, which should be the library's Paragraph descriptor's.</Text>
+      <Text>{report ?? 'waiting for the report'}</Text>
     </View>
   );
 }
@@ -39,6 +29,9 @@ function AppContent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    gap: 16,
+    justifyContent: 'center',
+    padding: 24,
   },
 });
 

@@ -1,79 +1,30 @@
 # rn-ios-library-paragraph-descriptor
 
-![Build](https://github.com/YevheniiKotyrlo/rn-ios-library-paragraph-descriptor/workflows/Pre%20Merge%20Checks/badge.svg)
+On iOS, React Native never uses a library's own component descriptor for `Paragraph` (`<Text>`), while it uses the
+same library's descriptor for `View`.
 
-This is your new React Native Reproducer project.
+`ReproducerApp` runs on `react-native@0.90.0-nightly-20261112-897cca827`. Its library, `ReproducerApp/library`
+(`ios/LibraryDescriptors.mm`), registers two component views from `+load` through
+`-[RCTComponentViewFactory registerComponentViewClass:]`:
 
-# Reproducer TODO list
+- `LibraryViewComponentView`, whose descriptor `LibraryViewComponentDescriptor` is a `ConcreteComponentDescriptor<ViewShadowNode>`;
+- `LibraryParagraphComponentView`, whose descriptor `LibraryParagraphComponentDescriptor` is a `BaseParagraphComponentDescriptor<ParagraphShadowNode>`.
 
-- [x] 1. Create a new reproducer project.
-- [ ] 2. Git clone your repository locally.
-- [ ] 3. Edit the project to reproduce the failure you're seeing.
-- [ ] 4. Push your changes, so that Github Actions can run the CI.
-- [ ] 5. Make sure the repository is public and share the link with the issue you reported.
+Each descriptor counts the shadow nodes it adopts. `App.tsx` renders a `View` holding two `Text`s, and once that is
+mounted it shows both counts on screen, from `LibraryDescriptorsProbe.report()`.
 
-# How to use this Reproducer
+## Steps
 
-This project has been created with `npx @react-native-community/cli init` and is a vanilla React Native app.
+1. `cd ReproducerApp && yarn install && cd ios && pod install`
+2. `yarn ios --mode Release`, or run the `ReproducerApp` scheme from Xcode.
+3. Read the second line on the screen.
 
-> [!IMPORTANT]  
-> Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/set-up-your-environment) so that you have a working environment locally.
+Expected: both descriptors adopted shadow nodes.
 
-## Step 1: Start the Metro Server
+Actual: `LibraryViewComponentDescriptor` adopted shadow nodes, and `LibraryParagraphComponentDescriptor` adopted 0.
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+## Script
 
-To start Metro, run the following command from the _root_ of your React Native project:
-
-```bash
-# using npm
-npm start
-
-# OR using Yarn
-yarn start
-```
-
-## Step 2: Start your Application
-
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
-
-### For Android
-
-```bash
-# using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### For iOS
-
-First, make sure you install dependencies with:
-
-```bash
-cd ios && bundle install && bundle exec pod install
-```
-
-Then you can run the iOS app with:
-
-```bash
-# using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
-
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
-
-## Step 3: Modifying your App
-
-Now that you have successfully run the app, let's modify it.
-
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
-
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
+`./repro.sh` does the steps on the booted simulator and prints the app's report; `./repro.sh build-device` and
+`./repro.sh run-device <udid> <app>` do them on a device. It exits 1 while the Paragraph descriptor adopts nothing
+and 0 once it adopts the app's `Text`s.
